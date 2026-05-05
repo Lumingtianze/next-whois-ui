@@ -1,8 +1,15 @@
 "use client";
 
-import "@khmyznikov/pwa-install";
 import { useEffect } from "react";
+
 export default function PWAInstaller({ ...props }) {
+  // 仅在客户端挂载后动态加载 Web Component 库
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      import("@khmyznikov/pwa-install");
+    }
+  }, []);
+
   return (
     // @ts-ignore
     <pwa-install id={`pwa-install`} {...props}></pwa-install>
@@ -21,13 +28,18 @@ export type PWAInstallerMethods = {
 };
 
 export function usePWAInstaller() {
-  const getInstallerElement = (): PWAInstallerMethods =>
-    document.getElementById("pwa-install") as unknown as PWAInstallerMethods;
+  // 增加环境判断，防止在服务端执行时报错
+  const getInstallerElement = (): PWAInstallerMethods | null => {
+    if (typeof window === "undefined") return null;
+    return document.getElementById("pwa-install") as unknown as PWAInstallerMethods;
+  };
 
   return {
     install: (force?: boolean) => {
       const installer = getInstallerElement();
-      installer?.showDialog(force);
+      if (!installer) return; // 服务端直接返回
+
+      installer.showDialog(force);
 
       console.log(
         `[installer] ${force ? "forced" : "prompted"} installation to:`,

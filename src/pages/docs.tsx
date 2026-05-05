@@ -1,8 +1,7 @@
 import React from "react";
 import Head from "next/head";
 import Link from "next/link";
-import { GetServerSidePropsContext } from "next";
-import { getOrigin } from "@/lib/seo";
+import { GetStaticProps } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -237,11 +236,13 @@ function ParamsTable({
   );
 }
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  return { props: { origin: getOrigin(context.req) } };
-}
+// 采用 SSG 模式，完全放弃对 Request 对象的依赖
+// 对于多域名部署，使用相对路径处理 SEO 资源，或在 Head 中省略域名
+export const getStaticProps: GetStaticProps = async () => {
+  return { props: {} };
+};
 
-export default function DocsPage({ origin }: { origin: string }) {
+export default function DocsPage() {
   const { t } = useTranslation();
   return (
     <>
@@ -252,10 +253,11 @@ export default function DocsPage({ origin }: { origin: string }) {
           property="og:title"
           content={`${t("docs.title")} - Next Whois`}
         />
+        {/* 在 SSG 环境下使用相对路径。大多数现代爬虫会自动结合当前访问的域名进行补全 */}
         <meta
           key="og:image"
           property="og:image"
-          content={`${origin}/banner.png`}
+          content="/banner.png"
         />
         <meta
           key="twitter:title"
@@ -265,7 +267,7 @@ export default function DocsPage({ origin }: { origin: string }) {
         <meta
           key="twitter:image"
           name="twitter:image"
-          content={`${origin}/banner.png`}
+          content="/banner.png"
         />
       </Head>
       <div className="w-full h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden">

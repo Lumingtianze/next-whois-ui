@@ -76,6 +76,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { useSearchHotkeys } from "@/hooks/useSearchHotkeys";
 
+export const runtime = 'experimental-edge';
+
 const REGISTRAR_ICONS: Record<string, { slug: string | null; color: string }> =
   {
     godaddy: { slug: "godaddy", color: "#1BDBDB" },

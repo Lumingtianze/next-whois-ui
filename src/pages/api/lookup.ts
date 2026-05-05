@@ -1,34 +1,40 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import { lookupWhoisWithCache } from "@/lib/whois/lookup";
-import { WhoisAnalyzeResult } from "@/lib/whois/types";
 
-type Data = {
-  status: boolean;
-  time: number;
-  cached?: boolean;
-  source?: "rdap" | "whois";
-  result?: WhoisAnalyzeResult;
-  error?: string;
+export const config = {
+  runtime: 'edge',
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>,
-) {
-  const query = req.query.query || req.query.q;
+// 使用标准的 Web Request/Response 替换 Next.js 特有 API 对象
+export default async function handler(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const query = searchParams.get('query') || searchParams.get('q');
 
-  if (!query || typeof query !== "string" || query.length === 0) {
-    return res
-      .status(400)
-      .json({ time: -1, status: false, error: "Query is required" });
+  if (!query || query.length === 0) {
+    return new Response(
+      JSON.stringify({ time: -1, status: false, error: "Query is required" }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
   const { time, status, result, error, cached, source } =
     await lookupWhoisWithCache(query);
+
   if (!status) {
-    return res.status(500).json({ time, status, error });
+    return new Response(
+      JSON.stringify({ time, status, error }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
-  res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
-  return res.status(200).json({ time, status, result, cached, source });
+  // 返回处理后的 JSON 数据
+  return new Response(
+    JSON.stringify({ time, status, result, cached, source }),
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 's-maxage=3600, stale-while-revalidate=86400'
+      }
+    }
+  );
 }

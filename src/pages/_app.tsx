@@ -4,8 +4,12 @@ import Head from "next/head";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { siteTitle, siteDescription, siteKeywords } from "@/lib/seo";
-import PWAInstaller from "@/components/pwa_installer";
+import dynamic from "next/dynamic";
 import { Navbar } from "@/components/navbar";
+
+const PWAInstaller = dynamic(() => import("@/components/pwa_installer"), {
+  ssr: false,
+});
 
 export default function App({ Component, pageProps }: AppProps) {
   const origin: string = pageProps.origin || "";
